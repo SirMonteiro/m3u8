@@ -563,6 +563,23 @@ def test_should_parse_multiple_session_data():
     assert data["session_data"][3]["data_id"] == "com.example.title"
     assert data["session_data"][3]["uri"] == "title.json"
 
+def test_should_parse_multiple_define_name_and_value():
+
+    data = m3u8.parse(playlists.MULTIPLE_DEFINE_NAME_AND_VALUE)
+
+    assert data["variables_defined"][0]["name"] == "VAR1"
+    assert data["variables_defined"][0]["value"] == "Value1"
+
+    assert data["variables_defined"][1]["name"] == "VAR2"
+    assert data["variables_defined"][1]["value"] == "Value2"
+
+def test_should_parse_multiple_define_import():
+
+    data = m3u8.parse(playlists.MULTIPLE_DEFINE_IMPORT)
+
+    assert data["variables_imported"][0] == "token"
+    assert data["variables_imported"][1] == "key"
+
 
 def test_simple_playlist_with_discontinuity_sequence():
     data = m3u8.parse(playlists.SIMPLE_PLAYLIST_WITH_DISCONTINUITY_SEQUENCE)

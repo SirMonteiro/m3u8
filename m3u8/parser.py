@@ -65,6 +65,8 @@ def parse(content, strict=False, custom_tags_parser=None):
         "session_data": [],
         "session_keys": [],
         "segment_map": [],
+        "variables_defined": [],
+        "variables_imported": [],
     }
 
     state = {
@@ -170,6 +172,9 @@ def parse(content, strict=False, custom_tags_parser=None):
         elif line.startswith(protocol.ext_is_independent_segments):
             _parse_is_independent_segments(**parse_kwargs)
 
+        elif line.startswith(protocol.ext_x_define):
+            _parse_ext_x_define(**parse_kwargs)
+
         elif line.startswith(protocol.ext_x_endlist):
             _parse_endlist(**parse_kwargs)
 
@@ -246,6 +251,31 @@ def parse(content, strict=False, custom_tags_parser=None):
 
     return data
 
+
+def _parse_ext_x_define(line, data, **kwargs):
+    attribute_parser = remove_quotes_parser(
+        "name",
+        "value",
+        "import",
+    )
+    attributes = _parse_attribute_list(protocol.ext_x_define, line, attribute_parser)
+    name = attributes.get("name")
+    value = attributes.get("value")
+    import_attr = attributes.get("import")
+
+    if name and not value and not import_attr:
+        raise ParseError(kwargs["lineno"], "EXT-X-DEFINE tag must have VALUE if NAME is specified")
+
+    if data["is_variant"] and import_attr:
+        raise ParseError(kwargs["lineno"], "EXT-X-DEFINE tag with IMPORT attribute is not allowed in variant playlists")
+
+    if value and import_attr:
+        raise ParseError(kwargs["lineno"], "EXT-X-DEFINE tag cannot have both VALUE and IMPORT attributes")
+
+    if import_attr:
+        data["variables_imported"].append(import_attr)
+    else:
+        data["variables_defined"].append({"name": name, "value": value})
 
 def _parse_key(line, data, state, **kwargs):
     params = ATTRIBUTELISTPATTERN.split(line.replace(protocol.ext_x_key + ":", ""))[

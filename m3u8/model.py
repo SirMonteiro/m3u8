@@ -368,6 +368,17 @@ class M3U8:
         You could also use unicode(<this obj>) or str(<this obj>)
         """
         output = ["#EXTM3U"]
+        if hasattr(self, "variables_defined"):
+                for name, value in self.variables_defined.items():
+                    output.append(f'#EXT-X-DEFINE:NAME="{name}",VALUE="{value}"')
+
+        if hasattr(self, "variables_imported"):
+            for name, import_value in self.variables_imported.items():
+                result = f'#EXT-X-DEFINE: IMPORT="{import_value}"'
+                if name:
+                    result += f',NAME="{name}"'
+                output.append(result)
+
         if self.content_steering:
             output.append(str(self.content_steering))
         if self.media_sequence:
